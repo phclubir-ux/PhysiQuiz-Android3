@@ -1,56 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<resources>
 
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
+    <color name="colorPrimary">#082A70</color>
+    <color name="colorPrimaryDark">#051A45</color>
+    <color name="colorAccent">#D31717</color>
 
-    <!-- Physiquiz P -->
-    <path
-        android:fillColor="#082A70"
-        android:pathData="
-        M35,20
-        L35,88
-        L45,88
-        L45,62
-        L62,62
-        C80,62 88,53 88,40
-        C88,27 80,20 62,20
-        Z
-
-        M45,30
-        L60,30
-        C70,30 77,33 77,40
-        C77,47 70,52 60,52
-        L45,52
-        Z"/>
-
-    <!-- Quiz Play -->
-    <path
-        android:fillColor="#12B9F4"
-        android:pathData="
-        M53,34
-        L53,46
-        L64,40
-        Z"/>
-
-    <!-- Orbit -->
-    <path
-        android:strokeColor="#12B9F4"
-        android:strokeWidth="3"
-        android:fillColor="@android:color/transparent"
-        android:pathData="
-        M12,54
-        C25,20 82,15 96,45
-        C80,80 32,88 12,54"/>
-
-    <!-- Atom dot -->
-    <path
-        android:fillColor="#19D3A2"
-        android:pathData="
-        M84,25
-        A5,5 0,1 0,84,35
-        A5,5 0,1 0,84,25"/>
-
-</vector>
+</resources>

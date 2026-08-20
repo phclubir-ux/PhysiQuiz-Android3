@@ -35,7 +35,7 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
 
-      - name: Create Android project files
+      - name: Create Android project structure
         run: |
 
           mkdir -p app/src/main/java/com/physiquiz/student
@@ -73,70 +73,70 @@ jobs:
           cp proguard-rules.pro app/
 
 
-          cat > settings.gradle <<'EOF'
-pluginManagement {
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-    }
-}
-
-dependencyResolutionManagement {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-rootProject.name="PhysiQuizStudent"
-
-include(":app")
-EOF
+          echo "Creating Gradle files"
 
 
-          cat > build.gradle <<'EOF'
-plugins {
-    id 'com.android.application' version '8.7.3' apply false
-}
-EOF
+          printf '%s\n' \
+          'pluginManagement {' \
+          '    repositories {' \
+          '        google()' \
+          '        mavenCentral()' \
+          '        gradlePluginPortal()' \
+          '    }' \
+          '}' \
+          '' \
+          'dependencyResolutionManagement {' \
+          '    repositories {' \
+          '        google()' \
+          '        mavenCentral()' \
+          '    }' \
+          '}' \
+          '' \
+          'rootProject.name="PhysiQuizStudent"' \
+          'include(":app")' \
+          > settings.gradle
 
 
-          cat > app/build.gradle <<'EOF'
-plugins {
-    id 'com.android.application'
-}
 
-android {
-    namespace 'com.physiquiz.student'
-    compileSdk 35
-
-    defaultConfig {
-        applicationId "com.physiquiz.student"
-        minSdk 24
-        targetSdk 35
-        versionCode 1
-        versionName "1.0"
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-        }
-
-        debug {
-            minifyEnabled false
-        }
-    }
-}
-
-dependencies {
-
-}
-EOF
+          printf '%s\n' \
+          'plugins {' \
+          "    id 'com.android.application' version '8.7.3' apply false" \
+          '}' \
+          > build.gradle
 
 
-          echo "Project files:"
+
+          printf '%s\n' \
+          'plugins {' \
+          "    id 'com.android.application'" \
+          '}' \
+          '' \
+          'android {' \
+          "    namespace 'com.physiquiz.student'" \
+          '    compileSdk 35' \
+          '' \
+          '    defaultConfig {' \
+          '        applicationId "com.physiquiz.student"' \
+          '        minSdk 24' \
+          '        targetSdk 35' \
+          '        versionCode 1' \
+          '        versionName "1.0"' \
+          '    }' \
+          '' \
+          '    buildTypes {' \
+          '        debug {' \
+          '            minifyEnabled false' \
+          '        }' \
+          '        release {' \
+          '            minifyEnabled false' \
+          '        }' \
+          '    }' \
+          '}' \
+          > app/build.gradle
+
+
+
+          echo "Project structure:"
           find app -type f
 
 

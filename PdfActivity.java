@@ -144,7 +144,7 @@ public class PdfActivity extends Activity {
                 connection.setConnectTimeout(15000);
                 connection.setReadTimeout(30000);
                 connection.setInstanceFollowRedirects(true);
-                connection.setRequestProperty("User-Agent", "PhysiQuizAndroid/" + BuildConfig.VERSION_NAME);
+                connection.setRequestProperty("User-Agent", "PhysiQuizAndroid/1.0");
                 String auth = getIntent().getStringExtra(EXTRA_AUTH);
                 if (auth != null && !auth.trim().isEmpty()) {
                     connection.setRequestProperty("Authorization", "Bearer " + auth);

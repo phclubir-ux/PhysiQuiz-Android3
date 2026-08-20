@@ -76,6 +76,38 @@ public class MainActivity extends Activity {
         String site = prefs.getString(PREF_SITE, bundled);
         String token = prefs.getString(PREF_AUTH, "");
         api = new ApiClient(site, token);
+        // Remote Config
+AppRemoteConfig remoteConfig = new AppRemoteConfig(site);
+
+remoteConfig.load(json -> {
+    boolean maintenance = json.optBoolean("maintenance", false);
+
+    if (maintenance) {
+        ui.post(() -> {
+            showMessage(
+                "تعمیرات",
+                json.optString(
+                    "message",
+                    "اپلیکیشن موقتاً در دسترس نیست."
+                )
+            );
+        });
+    }
+
+    boolean forceUpdate = json.optBoolean("force_update", false);
+
+    if (forceUpdate) {
+        ui.post(() -> {
+            showMessage(
+                "بروزرسانی لازم است",
+                json.optString(
+                    "update_message",
+                    "لطفاً نسخه جدید اپلیکیشن را نصب کنید."
+                )
+            );
+        });
+    }
+});
         buildShell();
         if (token.isEmpty()) showLogin(); else showHome();
     }

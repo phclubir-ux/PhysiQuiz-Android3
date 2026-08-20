@@ -30,9 +30,8 @@ jobs:
         run: |
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-           - name: Rebuild Android project structure
-        run: |
-
+                - name: Rebuild Android project structure
+              run: | 
           cp build.gradle /tmp/app-build.gradle
 
           mkdir -p app/src/main/java/com/physiquiz/student
@@ -57,18 +56,12 @@ jobs:
           cp ic_launcher_background.xml app/src/main/res/drawable/
           cp ic_launcher_foreground.xml app/src/main/res/drawable/
 
-          cp ic_launcher.xml app/src/main/res/mipmap-anydpi-v26
-          cp ic_launcher_round.xml app/src/main/res/mipmap-anydpi-v26
+          cp ic_launcher.xml app/src/main/res/mipmap-anydpi-v26/
+          cp ic_launcher_round.xml app/src/main/res/mipmap-anydpi-v26/
 
           cp proguard-rules.pro app/
 
           cp /tmp/app-build.gradle app/build.gradle
-
-          cat > build.gradle <<'EOF'
-          plugins {
-              id 'com.android.application' version '8.7.3' apply false
-          }
-          EOF
 
           echo "Android project structure:"
           find app -type f

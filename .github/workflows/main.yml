@@ -40,9 +40,10 @@ jobs:
           mkdir -p app/src/main/res/drawable
           mkdir -p app/src/main/res/mipmap-anydpi-v26
 
-          cp MainActivity.java app/src/main/java/com/physiquiz/student/
-          cp ApiClient.java app/src/main/java/com/physiquiz/student/
-          cp PdfActivity.java app/src/main/java/com/physiquiz/student/
+        cp MainActivity.java app/src/main/java/com/physiquiz/student/
+cp ApiClient.java app/src/main/java/com/physiquiz/student/
+cp AppRemoteConfig.java app/src/main/java/com/physiquiz/student/
+cp PdfActivity.java app/src/main/java/com/physiquiz/student/
 
           cp AndroidManifest.xml app/src/main/AndroidManifest.xml
 

@@ -1,12 +1,11 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp" android:height="108dp"
-    android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#FFFFFF" android:pathData="M54,18a36,36 0,1 0,0 72a36,36 0,1 0,0 -72"/>
-    <path android:fillColor="@android:color/transparent" android:strokeColor="#2558DD" android:strokeWidth="3"
-        android:pathData="M30,54c0,-11 10,-20 24,-20s24,9 24,20s-10,20 -24,20s-24,-9 -24,-20"/>
-    <path android:fillColor="@android:color/transparent" android:strokeColor="#7C3AED" android:strokeWidth="3"
-        android:pathData="M40,31c10,-6 24,1 31,13s5,27 -5,33s-24,-1 -31,-13s-5,-27 5,-33"/>
-    <path android:fillColor="@android:color/transparent" android:strokeColor="#7C3AED" android:strokeWidth="3"
-        android:pathData="M68,31c-10,-6 -24,1 -31,13s-5,27 5,33s24,-1 31,-13s5,-27 -5,-33"/>
-    <path android:fillColor="#FBBF24" android:pathData="M54,49a5,5 0,1 0,0 10a5,5 0,1 0,0 -10"/>
-</vector>
+<?xml version="1.0" encoding="utf-8"?>
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:insetLeft="12dp"
+    android:insetTop="12dp"
+    android:insetRight="12dp"
+    android:insetBottom="12dp">
+
+    <bitmap
+        android:src="@drawable/physiquiz_logo"
+        android:gravity="center" />
+</inset>

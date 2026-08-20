@@ -55,7 +55,7 @@ public class ApiClient {
         c.setReadTimeout(30000);
         c.setRequestMethod(method);
         c.setRequestProperty("Accept", "application/json");
-        c.setRequestProperty("User-Agent", "PhysiQuizAndroid/" + BuildConfig.VERSION_NAME);
+        c.setRequestProperty("User-Agent", "PhysiQuizAndroid/1.0");
         if (!authToken.isEmpty()) {
             c.setRequestProperty("Authorization", "Bearer " + authToken);
             c.setRequestProperty("X-PhysiQuiz-Auth", authToken);

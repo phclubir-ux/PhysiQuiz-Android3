@@ -1,11 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<inset xmlns:android="http://schemas.android.com/apk/res/android"
-    android:insetLeft="12dp"
-    android:insetTop="12dp"
-    android:insetRight="12dp"
-    android:insetBottom="12dp">
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
 
-    <bitmap
-        android:src="@drawable/physiquiz_logo"
-        android:gravity="center" />
-</inset>
+    <!-- Main P -->
+    <path
+        android:fillColor="#082A70"
+        android:pathData="
+        M34,18
+        L34,86
+        L42,86
+        L42,60
+        L62,60
+        C78,60 86,51 86,38
+        C86,25 78,18 62,18
+        Z
+
+        M42,26
+        L60,26
+        C69,26 76,30 76,38
+        C76,46 69,51 60,51
+        L42,51
+        Z"/>
+
+
+    <!-- Play icon inside P -->
+    <path
+        android:fillColor="#12B9F4"
+        android:pathData="
+        M51,32
+        L51,45
+        L63,38
+        Z"/>
+
+
+    <!-- Orbit ring -->
+    <path
+        android:strokeColor="#12B9F4"
+        android:strokeWidth="2.8"
+        android:fillColor="@android:color/transparent"
+        android:pathData="
+        M12,54
+        C20,25 70,15 95,38
+        C80,75 35,88 12,54"/>
+
+
+    <!-- Atom point -->
+    <path
+        android:fillColor="#12B9F4"
+        android:pathData="
+        M82,28
+        A5,5 0,1 0,82.1,28"/>
+
+
+    <!-- Quiz check circle -->
+    <path
+        android:fillColor="#19D3A2"
+        android:pathData="
+        M76,72
+        A8,8 0,1 0,76.1,72"/>
+
+</vector>

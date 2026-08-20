@@ -46,6 +46,7 @@ public class MainActivity extends Activity {
     private SharedPreferences prefs;
     private ApiClient api;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private AppRemoteConfig remoteConfig;
     private final Handler ui = new Handler(Looper.getMainLooper());
 
     private FrameLayout content;

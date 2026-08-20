@@ -30,8 +30,8 @@ jobs:
         run: |
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-                - name: Rebuild Android project structure
-              run: | 
+      - name: Rebuild Android project structure
+        run: |
           cp build.gradle /tmp/app-build.gradle
 
           mkdir -p app/src/main/java/com/physiquiz/student
@@ -65,6 +65,7 @@ jobs:
 
           echo "Android project structure:"
           find app -type f
+
       - name: Setup Gradle 8.9
         uses: gradle/actions/setup-gradle@v6
         with:

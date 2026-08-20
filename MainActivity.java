@@ -49,11 +49,20 @@ public class MainActivity extends Activity {
     private AppRemoteConfig remoteConfig;
     private final Handler ui = new Handler(Looper.getMainLooper());
 
+    // ---- Remote (WordPress) app configuration ----
+    // NOTE: BuildConfig.VERSION_CODE is filled in automatically by Gradle from
+    // your app/build.gradle "versionCode" — keep that in sync with what you
+    // publish, since it's what the server compares against minimum_version_code.
+    private AppConfig config = new AppConfig();
+    private int accent = Color.rgb(37, 88, 221);
+    private int background = Color.rgb(246, 248, 252);
+
     private FrameLayout content;
     private LinearLayout topBar;
     private LinearLayout bottomBar;
     private TextView topTitle;
     private ProgressBar loading;
+    private LinearLayout rootLayout;
 
     private long currentAttemptId = 0;
     private String currentAttemptToken = "";
@@ -77,53 +86,115 @@ public class MainActivity extends Activity {
         String site = prefs.getString(PREF_SITE, bundled);
         String token = prefs.getString(PREF_AUTH, "");
         api = new ApiClient(site, token);
-        // Remote Config
-remoteConfig = new AppRemoteConfig(site);
+        remoteConfig = new AppRemoteConfig(site);
 
-remoteConfig.load(json -> {
-    boolean maintenance = json.optBoolean("maintenance", false);
+        // Show a minimal splash while we fetch settings from WordPress, so the
+        // whole UI (colors, app name, maintenance/update gates) is built ONCE
+        // with real data instead of flashing hardcoded values first.
+        showBootSplash();
 
-    if (maintenance) {
-        ui.post(() -> {
-            showMessage(
-                "تعمیرات",
-                json.optString(
-                    "message",
-                    "اپلیکیشن موقتاً در دسترس نیست."
-                )
-            );
-        });
+        remoteConfig.load(json -> ui.post(() -> {
+            config = AppConfig.fromJson(json); // fail-open: defaults if json is empty/unreachable
+            applyTheme();
+            bootWithConfig();
+        }));
     }
 
-    boolean forceUpdate = json.optBoolean("force_update", false);
-
-    if (forceUpdate) {
-        ui.post(() -> {
-            showMessage(
-                "بروزرسانی لازم است",
-                json.optString(
-                    "update_message",
-                    "لطفاً نسخه جدید اپلیکیشن را نصب کنید."
-                )
-            );
-        });
+    private void showBootSplash() {
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(background);
+        ProgressBar pb = new ProgressBar(this);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(dp(50), dp(50));
+        lp.gravity = Gravity.CENTER;
+        root.addView(pb, lp);
+        setContentView(root);
     }
-});
+
+    private void applyTheme() {
+        try { accent = Color.parseColor(config.accentColor); } catch (Exception ignored) {}
+        try { background = Color.parseColor(config.backgroundColor); } catch (Exception ignored) {}
+        if (config.forceFullscreen) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        }
+        if (config.blockScreenshots) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        }
+    }
+
+    private void bootWithConfig() {
+        if (config.loaded && !config.enabled) {
+            showBlockingScreen("اپلیکیشن غیرفعال است", "دسترسی به این اپلیکیشن موقتاً از سمت مدیر غیرفعال شده است.", null);
+            return;
+        }
+        if (config.loaded && config.maintenanceMode) {
+            showBlockingScreen("در حال بروزرسانی", config.maintenanceMessage, this::retryBoot);
+            return;
+        }
+        if (config.loaded && config.minimumVersionCode > BuildConfig.VERSION_CODE) {
+            String msg = config.updateMessage != null && !config.updateMessage.trim().isEmpty()
+                    ? config.updateMessage
+                    : "نسخه جدیدتری از اپلیکیشن منتشر شده است. لطفاً بروزرسانی کنید.";
+            showBlockingScreen("بروزرسانی لازم است", msg, config.updateUrl == null || config.updateUrl.trim().isEmpty()
+                    ? null
+                    : () -> openExternal(config.updateUrl));
+            return;
+        }
         buildShell();
+        String token = prefs.getString(PREF_AUTH, "");
         if (token.isEmpty()) showLogin(); else showHome();
+    }
+
+    private void retryBoot() {
+        showBootSplash();
+        remoteConfig.load(json -> ui.post(() -> {
+            config = AppConfig.fromJson(json);
+            applyTheme();
+            bootWithConfig();
+        }));
+    }
+
+    /** Full-screen gate used for disabled/maintenance/forced-update states. actionLabel is null -> only retry text shown if onAction != null means "retry", otherwise treated as "open link". */
+    private void showBlockingScreen(String title, String message, Runnable onAction) {
+        LinearLayout box = column();
+        box.setGravity(Gravity.CENTER);
+        box.setPadding(dp(28), dp(28), dp(28), dp(28));
+        box.setBackgroundColor(background);
+        TextView h = text(title, 22, Color.rgb(15, 23, 42), true);
+        h.setGravity(Gravity.CENTER);
+        box.addView(h, matchWrap());
+        TextView p = bodyText(message == null ? "" : message);
+        p.setGravity(Gravity.CENTER);
+        p.setPadding(0, dp(10), 0, dp(20));
+        box.addView(p, matchWrap());
+        if (onAction != null) {
+            Button b = primaryButton(config.updateUrl != null && !config.updateUrl.isEmpty() && "بروزرسانی لازم است".equals(title) ? "دریافت نسخه جدید" : "تلاش دوباره");
+            b.setOnClickListener(v -> onAction.run());
+            box.addView(b, new LinearLayout.LayoutParams(dp(220), dp(50)));
+        }
+        if (config.supportUrl != null && !config.supportUrl.trim().isEmpty()) {
+            Button support = secondaryButton("تماس با پشتیبانی");
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(220), dp(46));
+            lp.topMargin = dp(10);
+            support.setOnClickListener(v -> openExternal(config.supportUrl));
+            box.addView(support, lp);
+        }
+        FrameLayout wrap = new FrameLayout(this);
+        wrap.addView(box, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        setContentView(wrap);
     }
 
     private void buildShell() {
         LinearLayout root = new LinearLayout(this);
+        rootLayout = root;
         root.setOrientation(LinearLayout.VERTICAL);
         root.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-        root.setBackgroundColor(Color.rgb(246, 248, 252));
+        root.setBackgroundColor(background);
 
         topBar = new LinearLayout(this);
         topBar.setGravity(Gravity.CENTER_VERTICAL);
         topBar.setPadding(dp(16), dp(10), dp(16), dp(10));
         topBar.setBackgroundColor(Color.WHITE);
-        topTitle = text("فیزیکوییز", 19, Color.rgb(15, 23, 42), true);
+        topTitle = text(config.appName, 19, Color.rgb(15, 23, 42), true);
         topBar.addView(topTitle, new LinearLayout.LayoutParams(0, dp(46), 1));
         Button refresh = smallButton("↻");
         refresh.setOnClickListener(v -> refreshCurrent());
@@ -174,14 +245,15 @@ remoteConfig.load(json -> {
         topBar.setVisibility(View.GONE);
         bottomBar.setVisibility(View.GONE);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        if (config.blockScreenshots) getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
 
         ScrollView scroll = new ScrollView(this);
         LinearLayout box = column();
         box.setPadding(dp(24), dp(46), dp(24), dp(30));
-        TextView mark = text("PQ", 30, Color.rgb(37, 88, 221), true);
+        TextView mark = text("PQ", 30, accent, true);
         mark.setGravity(Gravity.CENTER);
         box.addView(mark, matchWrap());
-        TextView h = text("ورود به فیزیکوییز", 27, Color.rgb(15, 23, 42), true);
+        TextView h = text("ورود به " + config.appName, 27, Color.rgb(15, 23, 42), true);
         h.setGravity(Gravity.CENTER);
         h.setPadding(0, dp(10), 0, dp(8));
         box.addView(h, matchWrap());
@@ -242,7 +314,7 @@ remoteConfig.load(json -> {
             JSONObject user = json.optJSONObject("user");
             JSONObject stats = json.optJSONObject("stats");
             String name = user == null ? "دانش‌آموز" : user.optString("display_name", "دانش‌آموز");
-            page.addView(hero("سلام " + name, "داشبورد شخصی فیزیکوییز؛ بدون WebView و بدون وابستگی به برگه سایت."), matchWrapMargin(0, 14));
+            page.addView(hero("سلام " + name, "داشبورد شخصی " + config.appName + "؛ بدون WebView و بدون وابستگی به برگه سایت."), matchWrapMargin(0, 14));
 
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
@@ -374,7 +446,7 @@ remoteConfig.load(json -> {
             currentQuestionIndex = 0;
             currentAntiCheat = currentExam.optBoolean("anti_cheat", false);
             remainingSeconds = Math.max(0, currentExam.optInt("duration_minutes", 0) * 60L);
-            if (currentAntiCheat) getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+            if (currentAntiCheat || config.blockScreenshots) getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
             else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
             showQuestion();
             startTimer();
@@ -521,7 +593,7 @@ remoteConfig.load(json -> {
 
     private void showFinalResult(JSONObject result) {
         stopTimer();
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        if (!config.blockScreenshots) getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
         currentAttemptId = 0;
         currentAttemptToken = "";
         prepareSection("نتیجه آزمون");
@@ -543,7 +615,7 @@ remoteConfig.load(json -> {
         prepareSection("نتایج");
         runApi(() -> api.get("/wp-json/physiquiz/v1/mobile/results"), json -> {
             LinearLayout page = pageColumn();
-            page.addView(sectionIntro("کارنامه‌های من", "نتایج ثبت‌شده مستقیماً از داده‌های فیزیکوییز دریافت می‌شوند."), matchWrapMargin(0, 16));
+            page.addView(sectionIntro("کارنامه‌های من", "نتایج ثبت‌شده مستقیماً از داده‌های " + config.appName + " دریافت می‌شوند."), matchWrapMargin(0, 16));
             JSONArray rows = json.optJSONArray("results");
             if (rows == null || rows.length() == 0) page.addView(empty("هنوز نتیجه‌ای ثبت نشده است."), matchWrap());
             else for (int i = 0; i < rows.length(); i++) addResultCard(page, rows.optJSONObject(i));
@@ -612,10 +684,17 @@ remoteConfig.load(json -> {
                 return api.post("/wp-json/physiquiz/v1/mobile/profile", body);
             }, out -> toast("پروفایل ذخیره شد.")));
             page.addView(save, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
+            if (config.supportUrl != null && !config.supportUrl.trim().isEmpty()) {
+                Button support = secondaryButton("تماس با پشتیبانی");
+                LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50));
+                slp.topMargin = dp(12);
+                support.setOnClickListener(v -> openExternal(config.supportUrl));
+                page.addView(support, slp);
+            }
             Button logout = secondaryButton("خروج از حساب");
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)); lp.topMargin = dp(12);
             page.addView(logout, lp);
-            logout.setOnClickListener(v -> new AlertDialog.Builder(this).setTitle("خروج از حساب").setMessage("از حساب فیزیکوییز خارج می‌شوی؟").setNegativeButton("خیر", null).setPositiveButton("خروج", (d, w) -> doLogout()).show());
+            logout.setOnClickListener(v -> new AlertDialog.Builder(this).setTitle("خروج از حساب").setMessage("از حساب " + config.appName + " خارج می‌شوی؟").setNegativeButton("خیر", null).setPositiveButton("خروج", (d, w) -> doLogout()).show());
             setScrollable(page);
         });
     }
@@ -630,7 +709,7 @@ remoteConfig.load(json -> {
         currentAttemptId = 0;
         currentAttemptToken = "";
         stopTimer();
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        if (!config.blockScreenshots) getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
         showLogin();
     }
 
@@ -677,13 +756,14 @@ remoteConfig.load(json -> {
         if (url == null || !url.startsWith("https://")) { toast("آدرس PDF معتبر نیست."); return; }
         Intent intent = new Intent(this, PdfActivity.class);
         intent.putExtra(PdfActivity.EXTRA_URL, url);
-        intent.putExtra(PdfActivity.EXTRA_SECURE, currentAntiCheat);
+        intent.putExtra(PdfActivity.EXTRA_SECURE, currentAntiCheat || config.blockScreenshots);
         intent.putExtra(PdfActivity.EXTRA_FULLSCREEN, false);
         intent.putExtra(PdfActivity.EXTRA_AUTH, prefs.getString(PREF_AUTH, ""));
         startActivity(intent);
     }
 
     private void openExternal(String url) {
+        if (!config.allowExternalLinks) { toast("باز کردن لینک‌های خارجی توسط مدیر غیرفعال شده است."); return; }
         try {
             Uri uri = Uri.parse(url);
             if (!"https".equalsIgnoreCase(uri.getScheme())) { toast("فقط لینک HTTPS مجاز است."); return; }
@@ -771,7 +851,7 @@ remoteConfig.load(json -> {
 
     private View statCard(String label, String value) {
         LinearLayout c = card();
-        c.addView(text(value, 22, Color.rgb(37, 88, 221), true), matchWrap());
+        c.addView(text(value, 22, accent, true), matchWrap());
         c.addView(text(label, 12, Color.rgb(100, 116, 139), false), matchWrapMargin(0, 3));
         return c;
     }
@@ -862,7 +942,7 @@ remoteConfig.load(json -> {
         b.setTextSize(14);
         b.setTextColor(Color.WHITE);
         b.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        b.setBackground(roundRect(Color.rgb(37, 88, 221), 14, Color.TRANSPARENT, 0));
+        b.setBackground(roundRect(accent, 14, Color.TRANSPARENT, 0));
         return b;
     }
 
@@ -871,7 +951,7 @@ remoteConfig.load(json -> {
         b.setText(label);
         b.setAllCaps(false);
         b.setTextSize(14);
-        b.setTextColor(Color.rgb(37, 88, 221));
+        b.setTextColor(accent);
         b.setBackground(roundRect(Color.WHITE, 14, Color.rgb(191, 219, 254), 1));
         return b;
     }

@@ -78,7 +78,7 @@ public class MainActivity extends Activity {
         String token = prefs.getString(PREF_AUTH, "");
         api = new ApiClient(site, token);
         // Remote Config
-AppRemoteConfig remoteConfig = new AppRemoteConfig(site);
+remoteConfig = new AppRemoteConfig(site);
 
 remoteConfig.load(json -> {
     boolean maintenance = json.optBoolean("maintenance", false);
